@@ -70,6 +70,8 @@ code_name_rel = {
     #'CY': '棉纱'
 }
 
+coolDown = {}
+
 def getUrl(symbols):
     count = 0
     url = "http://hq.sinajs.cn/list="
@@ -82,22 +84,20 @@ def getUrl(symbols):
     return url
 
 def listen():
-    symbols = list(code_name_rel.keys())
     while True:
-        # if util.isOpenTime_wide() is False:
-        #     time.sleep(10)
-        #     continue
+        if util.isOpenTime_wide() is False:
+            time.sleep(10)
+            continue
         url = getUrl(code_name_rel.keys())
         ctn = requests.get(url).text
         strs = ctn.split("\n")
         values = []
         count = 0
         for line in strs:
-
-            # if util.isOpenTime_Kind(code) is False:
-            #     continue
-            if '"' not in line: continue
             code = line[line.index("str_") + 4: line.index('=') - 1].upper()
+            if util.isOpenTime_Kind(code) is False:
+                continue
+            if '"' not in line: continue
             line = line[line.index('"') + 1: line.rindex('"')]
             if line.__len__() == 0: continue
             cols = line.split(",")
@@ -133,17 +133,27 @@ def listen():
             latest_Price = float(lastest['f_price'])
             rate = round((latest_Price - pre_close) / pre_close * 100, 2)
             speed = round((latest_Price - _5minago_price) / _5minago_price * 100, 2)
-            if speed > 0.5:
+            if speed > 0.5 or speed < -0.5:
+                # 再次发送通知的CD时间
+                if code in coolDown.keys():
+                    now = util.getYMDHMS()
+                    coolDown_starttime = coolDown[code]
+                    durSec = util.timeDur_ReturnSec(coolDown_starttime, now)
+                    if durSec < 60 * 10:
+                        continue
+                    else:
+                        coolDown.pop(code)
+                # 发送通知
                 log.log("Send Notification: " + code + " speed: " + str(speed))
-                url = 'http://95.163.200.245:64210/smtpclient/sendPlain/('+str(rate)+')This is ' + code + '/This is ' + code + '/jacklaiu@qq.com'
-                requests.get(url)
+                url = 'http://95.163.200.245:64210/smtpclient/sendPlain/(Rate: '+str(rate)+' Speed: '+str(speed)+')This is '+code+'/This is '+code+'/jacklaiu@qq.com'
+                util.Async_req(url).start()
+                coolDown.setdefault(code, util.getYMDHMS())
 
         time.sleep(30)
 
+print("Start Listen Futures")
 listen()
-
-
-
+# print(util.timeDur_ReturnSec('2018-08-27 00:00:00', util.getYMDHMS()))
 
 
 

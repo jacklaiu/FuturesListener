@@ -1,6 +1,8 @@
 import tushare as ts
 import time
 import datetime
+import requests
+import threading
 
 exchange_code_rel = {
 
@@ -11,6 +13,20 @@ exchange_code_rel = {
     'DCE': ['AP', 'FG', 'MA', 'SF', 'SM', 'CF', 'SR', 'OI', 'RM', 'TA', 'ZC']
 
 }
+
+class Async_req(threading.Thread):
+    def __init__(self, url):
+        threading.Thread.__init__(self)
+        self.url = url
+    def run(self):
+        requests.get(self.url)
+
+def timeDur_ReturnSec(startTime, endTime):
+    startTime = datetime.datetime.strptime(startTime, "%Y-%m-%d %H:%M:%S")
+    endTime = datetime.datetime.strptime(endTime, "%Y-%m-%d %H:%M:%S")
+    # 相减得到秒数
+    seconds = (endTime - startTime).seconds
+    return seconds
 
 def getExchange(kind):
     for key in exchange_code_rel.keys():
