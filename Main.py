@@ -1,0 +1,150 @@
+# -*- coding: gbk -*-
+import  execjs
+import requests
+import PyBase.Util as util
+import PyBase.Dao as dao
+import PyBase.Log as log
+import time
+
+exchange_code_rel = {
+
+    'SHFE': ['RU', 'RB', 'BU', 'HC'],
+
+    'CZCE': ['A', 'B', 'M', 'J', 'JM', 'C', 'Y', 'L', 'PP', 'V', 'P', 'JD', 'I', 'FB', 'CS'],
+
+    'DCE':  ['AP','FG','MA','SF','SM','CF','SR','OI','RM','TA','ZC']
+
+}
+
+code_name_rel = {
+    # ÉÏº£ÆÚ»õ½»Ò×Ëù
+    #'AG': '»¦Òø',
+    #'CU': '»¦Í­',
+    #'AL': '»¦ÂÁ',
+    #'ZN': '»¦Ð¿',
+    'RU': 'Ïð½º',
+    #'FU': 'È¼ÓÍ',
+    #'PB': '»¦Ç¦',
+    'RB': 'ÂÝÎÆ',
+    #'WR': 'Ïß²Ä',
+    #'AU': '»¦½ð',
+    'BU': 'Á¤Çà',
+    'HC': 'ÈÈ¾í',
+    #'NI': '»¦Äø',
+    #'SN': '»¦Îý',
+    # ´óÁ¬ÉÌÆ·½»Ò×Ëù
+    'A': '¶¹Ò»',
+    'B': '¶¹¶þ',
+    'M': '¶¹ÆÉ',
+    'J': '½¹Ì¿',
+    'JM': '½¹Ãº',
+    'C': 'ÓñÃ×',
+    'Y': '¶¹ÓÍ',
+    'L': 'ËÜÁÏ',
+    'PP': 'PP',
+    'V': 'PVC',
+    'P': '×Øéµ',
+    'JD': '¼¦µ°',
+    'I': 'Ìú¿ó',
+    'FB': 'ÏË°å',
+    #'BB': '½º°å',
+    'CS': 'µí·Û',
+    # Ö£ÖÝÉÌÆ·½»Ò×Ëù
+    'AP': 'Æ»¹û',
+    #'WH': 'Ç¿Âó',
+    #'PM': 'ÆÕÂó',
+    'FG': '²£Á§',
+    'MA': '¼×´¼',
+    'SF': '¹èÌú',
+    'SM': '¹èÃÌ',
+    #'RI': 'Ôçµ¾',
+    'CF': 'ÃÞ»¨',
+    'SR': '°×ÌÇ',
+    'OI': '²ËÓÍ',
+    #'RS': '²Ë×Ñ',
+    'RM': '²ËÆÉ',
+    'TA': 'RTA',
+    'ZC': '¶¯Ãº'
+    #'JR': '¾¬µ¾',
+    #'LR': 'Ííµ¾',
+    #'CY': 'ÃÞÉ´'
+}
+
+def getUrl(symbols):
+    count = 0
+    url = "http://hq.sinajs.cn/list="
+    for code in symbols:
+        if count == symbols.__len__() - 1:
+            url = url + code + "0"
+        else:
+            url = url + code + '0,'
+        count = count + 1
+    return url
+
+def listen():
+    symbols = list(code_name_rel.keys())
+    while True:
+        # if util.isOpenTime_wide() is False:
+        #     time.sleep(10)
+        #     continue
+        url = getUrl(code_name_rel.keys())
+        ctn = requests.get(url).text
+        strs = ctn.split("\n")
+        values = []
+        count = 0
+        for line in strs:
+
+            # if util.isOpenTime_Kind(code) is False:
+            #     continue
+            if '"' not in line: continue
+            code = line[line.index("str_") + 4: line.index('=') - 1].upper()
+            line = line[line.index('"') + 1: line.rindex('"')]
+            if line.__len__() == 0: continue
+            cols = line.split(",")
+            name = cols[0]
+            pre_close = float(cols[5])
+            price = float(cols[8])
+            date = cols[17]
+            #print("Ãû³Æ£º" + name + " ×òÊÕ£º" + str(pre_close) + " ÏÖ¼Û£º" + str(price) + " ÊÕÅÌ¼Û£º" + str(round((price - pre_close)/pre_close * 100, 2)))
+            values.append((code, name, date, price, pre_close, util.getHMS(), util.getYMDHMS()))
+            count = count + 1
+        dao.updatemany("insert into t_future_tick(f_code, f_name, f_date, f_price, f_pre_close, f_time, f_createtime)"
+                       " values(%s,%s,%s,%s,%s,%s,%s)", values)
+        items = dao.select("select f_code, f_name, f_price, f_pre_close, f_createtime from t_future_tick where"
+                           " f_createtime > date_add(now(), interval - 5 minute) order by f_createtime desc", ())
+        code_items_rel = {}
+        for item in items:
+            code = item['f_code']
+            if code not in code_items_rel.keys():
+                code_items_rel.setdefault(code, [item])
+            else:
+                code_items_rel[code].append(item)
+
+        for code in code_items_rel.keys():
+            items = code_items_rel[code]
+            if items.__len__() < 2:
+                continue
+            lastest = items[0]
+            _5minago_item = items[-1]
+            pre_close = float(lastest['f_pre_close'])
+            _5minago_price = float(_5minago_item['f_price'])
+            if _5minago_price == 0 or pre_close == 0:
+                continue
+            latest_Price = float(lastest['f_price'])
+            rate = round((latest_Price - pre_close) / pre_close * 100, 2)
+            speed = round((latest_Price - _5minago_price) / _5minago_price * 100, 2)
+            if speed > 0.5:
+                log.log("Send Notification: " + code + " speed: " + str(speed))
+                url = 'http://95.163.200.245:64210/smtpclient/sendPlain/('+str(rate)+')This is ' + code + '/This is ' + code + '/jacklaiu@qq.com'
+                requests.get(url)
+
+        time.sleep(30)
+
+listen()
+
+
+
+
+
+
+
