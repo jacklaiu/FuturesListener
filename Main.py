@@ -124,7 +124,7 @@ def notify5min():
             # 发送通知
             log.log("Send Notification: " + code + " speed: " + str(speed))
             url = 'http://95.163.200.245:64210/smtpclient/sendPlain/(Rate: ' + str(rate) + ' Speed: ' + str(
-                speed) + ')This is ' + code + '/This is ' + code + '/jacklaiu@qq.com'
+                speed) + ')This is ' + code + '/This is ' + code + '/jacklaiu@163.com'
             util.Async_req(url).start()
             coolDown_5min.setdefault(code, util.getYMDHMS())
 
@@ -167,7 +167,7 @@ def notify10min():
             # 发送通知
             log.log("Send Notification: " + code + " speed: " + str(speed))
             url = 'http://95.163.200.245:64210/smtpclient/sendPlain/(Rate: ' + str(rate) + ' Speed: ' + str(
-                speed) + ')This is ' + code + '/This is ' + code + '/jacklaiu@qq.com'
+                speed) + ')This is ' + code + '/This is ' + code + '/jacklaiu@163.com'
             util.Async_req(url).start()
             coolDown_10min.setdefault(code, util.getYMDHMS())
 
@@ -210,7 +210,7 @@ def notify15min():
             # 发送通知
             log.log("Send Notification: " + code + " speed: " + str(speed))
             url = 'http://95.163.200.245:64210/smtpclient/sendPlain/(Rate: ' + str(rate) + ' Speed: ' + str(
-                speed) + ')This is ' + code + '/This is ' + code + '/jacklaiu@qq.com'
+                speed) + ')This is ' + code + '/This is ' + code + '/jacklaiu@163.com'
             util.Async_req(url).start()
             coolDown_15min.setdefault(code, util.getYMDHMS())
 
