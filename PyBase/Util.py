@@ -54,11 +54,11 @@ def isOpenTime(exchange):
     if isTodayOpen() is False:
         return False
     now = getHMS()
-    if exchange is "shfe" and '09:00:00' < now < '10:15:00' and '10:30:00' < now < '11:30:00' and '13:30:00' < now < '15:00:00' and '21:00:00' < now < '23:00:00':
+    if exchange == "shfe" and ('09:00:00' < now < '10:15:00' or '10:30:00' < now < '11:30:00' or '13:30:00' < now < '15:00:00' or '21:00:00' < now < '23:00:00'):
         return True
-    if exchange is "czce" and '09:00:00' < now < '10:15:00' and '10:30:00' < now < '11:30:00' and '13:30:00' < now < '15:00:00' and '21:00:00' < now < '23:30:00':
+    if exchange == "czce" and ('09:00:00' < now < '10:15:00' or '10:30:00' < now < '11:30:00' or '13:30:00' < now < '15:00:00' or '21:00:00' < now < '23:30:00'):
         return True
-    if exchange is "dce" and '09:00:00' < now < '10:15:00' and '10:30:00' < now < '11:30:00' and '13:30:00' < now < '15:00:00' and '21:00:00' < now < '23:30:00':
+    if exchange == "dce" and ('09:00:00' < now < '10:15:00' or '10:30:00' < now < '11:30:00' or '13:30:00' < now < '15:00:00' or '21:00:00' < now < '23:30:00'):
         return True
     return False
 

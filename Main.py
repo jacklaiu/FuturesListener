@@ -70,8 +70,9 @@ code_name_rel = {
     #'CY': '棉纱'
 }
 
-coolDown = {}
-
+coolDown_5min = {}
+coolDown_10min = {}
+coolDown_15min = {}
 def getUrl(symbols):
     count = 0
     url = "http://hq.sinajs.cn/list="
@@ -133,21 +134,54 @@ def listen():
             latest_Price = float(lastest['f_price'])
             rate = round((latest_Price - pre_close) / pre_close * 100, 2)
             speed = round((latest_Price - _5minago_price) / _5minago_price * 100, 2)
-            if speed > 0.5 or speed < -0.5:
+
+            if speed > 1.0 or speed < -1.0:
                 # 再次发送通知的CD时间
-                if code in coolDown.keys():
+                if code in coolDown_15min.keys():
                     now = util.getYMDHMS()
-                    coolDown_starttime = coolDown[code]
-                    durSec = util.timeDur_ReturnSec(coolDown_starttime, now)
-                    if durSec < 60 * 10:
+                    coolDown_15min_starttime = coolDown_15min[code]
+                    durSec = util.timeDur_ReturnSec(coolDown_15min_starttime, now)
+                    if durSec < 60 * 30:
                         continue
                     else:
-                        coolDown.pop(code)
+                        coolDown_15min.pop(code)
                 # 发送通知
                 log.log("Send Notification: " + code + " speed: " + str(speed))
                 url = 'http://95.163.200.245:64210/smtpclient/sendPlain/(Rate: '+str(rate)+' Speed: '+str(speed)+')This is '+code+'/This is '+code+'/jacklaiu@qq.com'
                 util.Async_req(url).start()
-                coolDown.setdefault(code, util.getYMDHMS())
+                coolDown_15min.setdefault(code, util.getYMDHMS())
+
+            if speed > 0.7 or speed < -0.7:
+                # 再次发送通知的CD时间
+                if code in coolDown_10min.keys():
+                    now = util.getYMDHMS()
+                    coolDown_10min_starttime = coolDown_10min[code]
+                    durSec = util.timeDur_ReturnSec(coolDown_10min_starttime, now)
+                    if durSec < 60 * 30:
+                        continue
+                    else:
+                        coolDown_10min.pop(code)
+                # 发送通知
+                log.log("Send Notification: " + code + " speed: " + str(speed))
+                url = 'http://95.163.200.245:64210/smtpclient/sendPlain/(Rate: '+str(rate)+' Speed: '+str(speed)+')This is '+code+'/This is '+code+'/jacklaiu@qq.com'
+                util.Async_req(url).start()
+                coolDown_10min.setdefault(code, util.getYMDHMS())
+
+            if speed > 0.5 or speed < -0.5:
+                # 再次发送通知的CD时间
+                if code in coolDown_5min.keys():
+                    now = util.getYMDHMS()
+                    coolDown_5min_starttime = coolDown_5min[code]
+                    durSec = util.timeDur_ReturnSec(coolDown_5min_starttime, now)
+                    if durSec < 60 * 30:
+                        continue
+                    else:
+                        coolDown_5min.pop(code)
+                # 发送通知
+                log.log("Send Notification: " + code + " speed: " + str(speed))
+                url = 'http://95.163.200.245:64210/smtpclient/sendPlain/(Rate: '+str(rate)+' Speed: '+str(speed)+')This is '+code+'/This is '+code+'/jacklaiu@qq.com'
+                util.Async_req(url).start()
+                coolDown_5min.setdefault(code, util.getYMDHMS())
 
         time.sleep(30)
 
