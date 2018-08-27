@@ -85,6 +85,41 @@ def getUrl(symbols):
         count = count + 1
     return url
 
+def getRateBetweenMaxAndMin_Speed(items):
+
+    min_createtime_o = {'min': 0, 'createtime': '1970-01-01 00:00:00'}
+    for item in items:
+        price = float(item['f_price'])
+        createtime = item['f_createtime']
+        if price <= min_createtime_o['min']:
+            min_createtime_o['min'] = price
+            min_createtime_o['createtime'] = createtime
+
+    max_createtime_o = {'max': 0, 'createtime': '1970-01-01 00:00:00'}
+    for item in items:
+        price = float(item['f_price'])
+        createtime = item['f_createtime']
+        if price >= max_createtime_o['max']:
+            max_createtime_o['max'] = price
+            max_createtime_o['createtime'] = createtime
+
+    min_createtime = min_createtime_o['createtime']
+    max_createtime = max_createtime_o['createtime']
+    min_price = min_createtime_o['min']
+    max_price = max_createtime_o['max']
+
+    if min_price == 0:
+        return 0
+
+    if min_createtime > max_createtime:
+        if max_price == 0:
+            return 0
+        return round((min_price - max_price) / max_price * 100, 2)
+    else:
+        if min_price == 0:
+            return 0
+        return round((max_price - min_price) / min_price * 100, 2)
+
 def notify5min():
     # --------------------------------------------------------------------------------------------------------------------------------------------
     items = dao.select("select f_code, f_name, f_price, f_pre_close, f_createtime from t_future_tick where"
@@ -102,15 +137,10 @@ def notify5min():
         if items.__len__() < 2:
             continue
         lastest = items[0]
-        _5minago_item = items[-1]
         pre_close = float(lastest['f_pre_close'])
-        _5minago_price = float(_5minago_item['f_price'])
-        if _5minago_price == 0 or pre_close == 0:
-            continue
-        latest_Price = float(lastest['f_price'])
-        rate = round((latest_Price - pre_close) / pre_close * 100, 2)
-        speed = round((latest_Price - _5minago_price) / _5minago_price * 100, 2)
-
+        price = float(lastest['f_price'])
+        rate = round((price - pre_close) / pre_close * 100, 2)
+        speed = getRateBetweenMaxAndMin_Speed(items)
         if speed > 0.5 or speed < -0.5:
             # 再次发送通知的CD时间
             if code in coolDown_5min.keys():
@@ -145,14 +175,10 @@ def notify10min():
         if items.__len__() < 2:
             continue
         lastest = items[0]
-        _5minago_item = items[-1]
         pre_close = float(lastest['f_pre_close'])
-        _5minago_price = float(_5minago_item['f_price'])
-        if _5minago_price == 0 or pre_close == 0:
-            continue
-        latest_Price = float(lastest['f_price'])
-        rate = round((latest_Price - pre_close) / pre_close * 100, 2)
-        speed = round((latest_Price - _5minago_price) / _5minago_price * 100, 2)
+        price = float(lastest['f_price'])
+        rate = round((price - pre_close) / pre_close * 100, 2)
+        speed = getRateBetweenMaxAndMin_Speed(items)
 
         if speed > 0.7 or speed < -0.7:
             # 再次发送通知的CD时间
@@ -188,14 +214,10 @@ def notify15min():
         if items.__len__() < 2:
             continue
         lastest = items[0]
-        _5minago_item = items[-1]
         pre_close = float(lastest['f_pre_close'])
-        _5minago_price = float(_5minago_item['f_price'])
-        if _5minago_price == 0 or pre_close == 0:
-            continue
-        latest_Price = float(lastest['f_price'])
-        rate = round((latest_Price - pre_close) / pre_close * 100, 2)
-        speed = round((latest_Price - _5minago_price) / _5minago_price * 100, 2)
+        price = float(lastest['f_price'])
+        rate = round((price - pre_close) / pre_close * 100, 2)
+        speed = getRateBetweenMaxAndMin_Speed(items)
 
         if speed > 1.0 or speed < -1.0:
             # 再次发送通知的CD时间
@@ -250,7 +272,7 @@ def listen():
         notify10min()
         notify15min()
         print("loop next need sleep")
-        time.sleep(20)
+        time.sleep(10)
 
 print("Start Listen Futures")
 listen()
