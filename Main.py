@@ -73,6 +73,7 @@ code_name_rel = {
 coolDown_5min = {}
 coolDown_10min = {}
 coolDown_15min = {}
+
 def getUrl(symbols):
     count = 0
     url = "http://hq.sinajs.cn/list="
@@ -83,6 +84,135 @@ def getUrl(symbols):
             url = url + code + '0,'
         count = count + 1
     return url
+
+def notify5min():
+    # --------------------------------------------------------------------------------------------------------------------------------------------
+    items = dao.select("select f_code, f_name, f_price, f_pre_close, f_createtime from t_future_tick where"
+                       " f_createtime > date_add(now(), interval - 5 minute) order by f_createtime desc", ())
+    code_items_rel = {}
+    for item in items:
+        code = item['f_code']
+        if code not in code_items_rel.keys():
+            code_items_rel.setdefault(code, [item])
+        else:
+            code_items_rel[code].append(item)
+
+    for code in code_items_rel.keys():
+        items = code_items_rel[code]
+        if items.__len__() < 2:
+            continue
+        lastest = items[0]
+        _5minago_item = items[-1]
+        pre_close = float(lastest['f_pre_close'])
+        _5minago_price = float(_5minago_item['f_price'])
+        if _5minago_price == 0 or pre_close == 0:
+            continue
+        latest_Price = float(lastest['f_price'])
+        rate = round((latest_Price - pre_close) / pre_close * 100, 2)
+        speed = round((latest_Price - _5minago_price) / _5minago_price * 100, 2)
+
+        if speed > 0.5 or speed < -0.5:
+            # 再次发送通知的CD时间
+            if code in coolDown_5min.keys():
+                now = util.getYMDHMS()
+                coolDown_5min_starttime = coolDown_5min[code]
+                durSec = util.timeDur_ReturnSec(coolDown_5min_starttime, now)
+                if durSec < 60 * 30:
+                    return
+                else:
+                    coolDown_5min.pop(code)
+            # 发送通知
+            log.log("Send Notification: " + code + " speed: " + str(speed))
+            url = 'http://95.163.200.245:64210/smtpclient/sendPlain/(Rate: ' + str(rate) + ' Speed: ' + str(
+                speed) + ')This is ' + code + '/This is ' + code + '/jacklaiu@qq.com'
+            util.Async_req(url).start()
+            coolDown_5min.setdefault(code, util.getYMDHMS())
+
+def notify10min():
+    # --------------------------------------------------------------------------------------------------------------------------------------------
+    items = dao.select("select f_code, f_name, f_price, f_pre_close, f_createtime from t_future_tick where"
+                       " f_createtime > date_add(now(), interval - 10 minute) order by f_createtime desc", ())
+    code_items_rel = {}
+    for item in items:
+        code = item['f_code']
+        if code not in code_items_rel.keys():
+            code_items_rel.setdefault(code, [item])
+        else:
+            code_items_rel[code].append(item)
+
+    for code in code_items_rel.keys():
+        items = code_items_rel[code]
+        if items.__len__() < 2:
+            continue
+        lastest = items[0]
+        _5minago_item = items[-1]
+        pre_close = float(lastest['f_pre_close'])
+        _5minago_price = float(_5minago_item['f_price'])
+        if _5minago_price == 0 or pre_close == 0:
+            continue
+        latest_Price = float(lastest['f_price'])
+        rate = round((latest_Price - pre_close) / pre_close * 100, 2)
+        speed = round((latest_Price - _5minago_price) / _5minago_price * 100, 2)
+
+        if speed > 0.7 or speed < -0.7:
+            # 再次发送通知的CD时间
+            if code in coolDown_10min.keys():
+                now = util.getYMDHMS()
+                coolDown_10min_starttime = coolDown_10min[code]
+                durSec = util.timeDur_ReturnSec(coolDown_10min_starttime, now)
+                if durSec < 60 * 30:
+                    return
+                else:
+                    coolDown_10min.pop(code)
+            # 发送通知
+            log.log("Send Notification: " + code + " speed: " + str(speed))
+            url = 'http://95.163.200.245:64210/smtpclient/sendPlain/(Rate: ' + str(rate) + ' Speed: ' + str(
+                speed) + ')This is ' + code + '/This is ' + code + '/jacklaiu@qq.com'
+            util.Async_req(url).start()
+            coolDown_10min.setdefault(code, util.getYMDHMS())
+
+def notify15min():
+    # --------------------------------------------------------------------------------------------------------------------------------------------
+    items = dao.select("select f_code, f_name, f_price, f_pre_close, f_createtime from t_future_tick where"
+                       " f_createtime > date_add(now(), interval - 15 minute) order by f_createtime desc", ())
+    code_items_rel = {}
+    for item in items:
+        code = item['f_code']
+        if code not in code_items_rel.keys():
+            code_items_rel.setdefault(code, [item])
+        else:
+            code_items_rel[code].append(item)
+
+    for code in code_items_rel.keys():
+        items = code_items_rel[code]
+        if items.__len__() < 2:
+            continue
+        lastest = items[0]
+        _5minago_item = items[-1]
+        pre_close = float(lastest['f_pre_close'])
+        _5minago_price = float(_5minago_item['f_price'])
+        if _5minago_price == 0 or pre_close == 0:
+            continue
+        latest_Price = float(lastest['f_price'])
+        rate = round((latest_Price - pre_close) / pre_close * 100, 2)
+        speed = round((latest_Price - _5minago_price) / _5minago_price * 100, 2)
+
+        if speed > 1.0 or speed < -1.0:
+            # 再次发送通知的CD时间
+            if code in coolDown_15min.keys():
+                now = util.getYMDHMS()
+                coolDown_15min_starttime = coolDown_15min[code]
+                durSec = util.timeDur_ReturnSec(coolDown_15min_starttime, now)
+                if durSec < 60 * 30:
+                    return
+                else:
+                    coolDown_15min.pop(code)
+            # 发送通知
+            log.log("Send Notification: " + code + " speed: " + str(speed))
+            url = 'http://95.163.200.245:64210/smtpclient/sendPlain/(Rate: ' + str(rate) + ' Speed: ' + str(
+                speed) + ')This is ' + code + '/This is ' + code + '/jacklaiu@qq.com'
+            util.Async_req(url).start()
+            coolDown_15min.setdefault(code, util.getYMDHMS())
 
 def listen():
     while True:
@@ -111,78 +241,10 @@ def listen():
             count = count + 1
         dao.updatemany("insert into t_future_tick(f_code, f_name, f_date, f_price, f_pre_close, f_time, f_createtime)"
                        " values(%s,%s,%s,%s,%s,%s,%s)", values)
-        items = dao.select("select f_code, f_name, f_price, f_pre_close, f_createtime from t_future_tick where"
-                           " f_createtime > date_add(now(), interval - 5 minute) order by f_createtime desc", ())
-        code_items_rel = {}
-        for item in items:
-            code = item['f_code']
-            if code not in code_items_rel.keys():
-                code_items_rel.setdefault(code, [item])
-            else:
-                code_items_rel[code].append(item)
 
-        for code in code_items_rel.keys():
-            items = code_items_rel[code]
-            if items.__len__() < 2:
-                continue
-            lastest = items[0]
-            _5minago_item = items[-1]
-            pre_close = float(lastest['f_pre_close'])
-            _5minago_price = float(_5minago_item['f_price'])
-            if _5minago_price == 0 or pre_close == 0:
-                continue
-            latest_Price = float(lastest['f_price'])
-            rate = round((latest_Price - pre_close) / pre_close * 100, 2)
-            speed = round((latest_Price - _5minago_price) / _5minago_price * 100, 2)
-
-            if speed > 1.0 or speed < -1.0:
-                # 再次发送通知的CD时间
-                if code in coolDown_15min.keys():
-                    now = util.getYMDHMS()
-                    coolDown_15min_starttime = coolDown_15min[code]
-                    durSec = util.timeDur_ReturnSec(coolDown_15min_starttime, now)
-                    if durSec < 60 * 30:
-                        continue
-                    else:
-                        coolDown_15min.pop(code)
-                # 发送通知
-                log.log("Send Notification: " + code + " speed: " + str(speed))
-                url = 'http://95.163.200.245:64210/smtpclient/sendPlain/(Rate: '+str(rate)+' Speed: '+str(speed)+')This is '+code+'/This is '+code+'/jacklaiu@qq.com'
-                util.Async_req(url).start()
-                coolDown_15min.setdefault(code, util.getYMDHMS())
-
-            if speed > 0.7 or speed < -0.7:
-                # 再次发送通知的CD时间
-                if code in coolDown_10min.keys():
-                    now = util.getYMDHMS()
-                    coolDown_10min_starttime = coolDown_10min[code]
-                    durSec = util.timeDur_ReturnSec(coolDown_10min_starttime, now)
-                    if durSec < 60 * 30:
-                        continue
-                    else:
-                        coolDown_10min.pop(code)
-                # 发送通知
-                log.log("Send Notification: " + code + " speed: " + str(speed))
-                url = 'http://95.163.200.245:64210/smtpclient/sendPlain/(Rate: '+str(rate)+' Speed: '+str(speed)+')This is '+code+'/This is '+code+'/jacklaiu@qq.com'
-                util.Async_req(url).start()
-                coolDown_10min.setdefault(code, util.getYMDHMS())
-
-            if speed > 0.5 or speed < -0.5:
-                # 再次发送通知的CD时间
-                if code in coolDown_5min.keys():
-                    now = util.getYMDHMS()
-                    coolDown_5min_starttime = coolDown_5min[code]
-                    durSec = util.timeDur_ReturnSec(coolDown_5min_starttime, now)
-                    if durSec < 60 * 30:
-                        continue
-                    else:
-                        coolDown_5min.pop(code)
-                # 发送通知
-                log.log("Send Notification: " + code + " speed: " + str(speed))
-                url = 'http://95.163.200.245:64210/smtpclient/sendPlain/(Rate: '+str(rate)+' Speed: '+str(speed)+')This is '+code+'/This is '+code+'/jacklaiu@qq.com'
-                util.Async_req(url).start()
-                coolDown_5min.setdefault(code, util.getYMDHMS())
-
+        notify5min()
+        notify10min()
+        notify15min()
         time.sleep(30)
 
 print("Start Listen Futures")
