@@ -225,7 +225,11 @@ def listen():
         values = []
         count = 0
         for line in strs:
-            code = line[line.index("str_") + 4: line.index('=') - 1].upper()
+            if line == '': continue
+            try:
+                code = line[line.index("str_") + 4: line.index('=') - 1].upper()
+            except:
+                continue
             if util.isOpenTime_Kind(code) is False:
                 continue
             if '"' not in line: continue
@@ -236,7 +240,7 @@ def listen():
             pre_close = float(cols[5])
             price = float(cols[8])
             date = cols[17]
-            #print("名称：" + name + " 昨收：" + str(pre_close) + " 现价：" + str(price) + " 收盘价：" + str(round((price - pre_close)/pre_close * 100, 2)))
+            print("名称：" + name + " 昨收：" + str(pre_close) + " 现价：" + str(price) + " 收盘价：" + str(round((price - pre_close)/pre_close * 100, 2)))
             values.append((code, name, date, price, pre_close, util.getHMS(), util.getYMDHMS()))
             count = count + 1
         dao.updatemany("insert into t_future_tick(f_code, f_name, f_date, f_price, f_pre_close, f_time, f_createtime)"
@@ -245,7 +249,8 @@ def listen():
         notify5min()
         notify10min()
         notify15min()
-        time.sleep(30)
+        print("loop next need sleep")
+        time.sleep(20)
 
 print("Start Listen Futures")
 listen()
