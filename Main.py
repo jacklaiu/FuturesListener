@@ -6,6 +6,9 @@ import PyBase.Dao as dao
 import PyBase.Log as log
 import time
 
+SmtpClient_Host = '127.0.0.1'
+SmtpClient_Port = 64210
+
 exchange_code_rel = {
 
     'SHFE': ['RU', 'RB', 'BU', 'HC'],
@@ -150,7 +153,7 @@ def notify5min():
                     coolDown_5min.pop(code)
             # 发送通知
             log.log("Send Notification: " + code + " speed: " + str(speed))
-            url = 'http://95.163.200.245:64210/smtpclient/sendPlain/(Rate: ' + str(rate) + ' Speed: ' + str(
+            url = 'http://'+SmtpClient_Host+':'+str(SmtpClient_Port)+'/smtpclient/sendPlain/(Rate: ' + str(rate) + ' Speed: ' + str(
                 speed) + ')This is ' + code + '/This is ' + code + '/jacklaiu@163.com'
             util.Async_req(url).start()
             coolDown_5min.setdefault(code, util.getYMDHMS())
@@ -188,8 +191,9 @@ def notify10min():
                 else:
                     coolDown_10min.pop(code)
             # 发送通知
+            has5Notice = "5! " if code in coolDown_5min.keys() else ""
             log.log("Send Notification: " + code + " speed: " + str(speed))
-            url = 'http://95.163.200.245:64210/smtpclient/sendPlain/(Rate: ' + str(rate) + ' Speed: ' + str(
+            url = 'http://'+SmtpClient_Host+':'+str(SmtpClient_Port)+'/smtpclient/sendPlain/'+has5Notice+'(Rate: ' + str(rate) + ' Speed: ' + str(
                 speed) + ')This is ' + code + '/This is ' + code + '/jacklaiu@163.com'
             util.Async_req(url).start()
             coolDown_10min.setdefault(code, util.getYMDHMS())
@@ -227,8 +231,11 @@ def notify15min():
                 else:
                     coolDown_15min.pop(code)
             # 发送通知
+            has5Notice = "5! " if code in coolDown_5min.keys() else ""
+            has10Notice = "10! " if code in coolDown_10min.keys() else ""
+            _str = has5Notice + has10Notice
             log.log("Send Notification: " + code + " speed: " + str(speed))
-            url = 'http://95.163.200.245:64210/smtpclient/sendPlain/(Rate: ' + str(rate) + ' Speed: ' + str(
+            url = 'http://'+SmtpClient_Host+':'+str(SmtpClient_Port)+'/smtpclient/sendPlain/' + _str + '(Rate: ' + str(rate) + ' Speed: ' + str(
                 speed) + ')This is ' + code + '/This is ' + code + '/jacklaiu@163.com'
             util.Async_req(url).start()
             coolDown_15min.setdefault(code, util.getYMDHMS())
@@ -258,12 +265,16 @@ def listen():
             name = cols[0]
             pre_close = float(cols[5])
             price = float(cols[8])
+            position = float(cols[13])
+            settlement_price = float(cols[9])
             date = cols[17]
-            print("名称：" + name + " 昨收：" + str(pre_close) + " 现价：" + str(price) + " 收盘价：" + str(round((price - pre_close)/pre_close * 100, 2)))
-            values.append((code, name, date, price, pre_close, util.getHMS(), util.getYMDHMS()))
+            log.log("名称：" + name + " 昨收：" + str(pre_close) + " 现价：" + str(price) + " 收盘价：" + str(round((price - pre_close)/pre_close * 100, 2)))
+            values.append((code, name, date, price, pre_close, position, settlement_price, util.getHMS(), util.getYMDHMS()))
             count = count + 1
-        dao.updatemany("insert into t_future_tick(f_code, f_name, f_date, f_price, f_pre_close, f_time, f_createtime)"
-                       " values(%s,%s,%s,%s,%s,%s,%s)", values)
+        dao.updatemany("insert into"
+                       " t_future_tick(f_code, f_name, f_date, f_price, f_pre_close,"
+                       " f_position, f_settlement_price, f_time, f_createtime)"
+                       " values(%s,%s,%s,%s,%s,%s,%s,%s,%s)", values)
 
         notify5min()
         notify10min()
