@@ -91,7 +91,7 @@ def getRateBetweenMaxAndMin_Speed(items):
     for item in items:
         price = float(item['f_price'])
         createtime = item['f_createtime']
-        if price <= min_createtime_o['min']:
+        if min_createtime_o['min'] == 0 or price <= min_createtime_o['min']:
             min_createtime_o['min'] = price
             min_createtime_o['createtime'] = createtime
 
@@ -107,9 +107,6 @@ def getRateBetweenMaxAndMin_Speed(items):
     max_createtime = max_createtime_o['createtime']
     min_price = min_createtime_o['min']
     max_price = max_createtime_o['max']
-
-    if min_price == 0:
-        return 0
 
     if min_createtime > max_createtime:
         if max_price == 0:
